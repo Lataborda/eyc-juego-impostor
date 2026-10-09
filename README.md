@@ -7,7 +7,8 @@ El juego se conduce en un solo celular por grupo. Los conceptos provienen de Res
 ## Direcciones
 
 - Página pública: https://lataborda.github.io/eyc-juego-impostor/
-- Hoja de cálculo: pendiente.
+- Aplicación web de Apps Script: https://script.google.com/macros/s/AKfycbzqb1My_f40bmkfnCuJ5K5Bw9h26pPBYdCYGRdluIXQ7s9KZRsiv430tJ5FGpKEurAZ/exec (constante `URL_SCRIPT` de `index.html`).
+- Hoja de cálculo: "EyC_2026-2_Juego del impostor", en el Google Drive del profesor. Su dirección no se publica en este repositorio, porque el repositorio es público y la hoja contiene la lista de estudiantes.
 
 ## Archivos
 
@@ -44,7 +45,12 @@ Un cambio en `Codigo.gs` no llega a la aplicación web hasta que se publica una 
 3. Editar la implementación activa con el ícono de lápiz.
 4. En Versión, escoger Nueva versión y pulsar Implementar.
 
-Así la dirección `/exec` no cambia y la página sigue conectada. Si se crea una implementación nueva con Nueva implementación, la dirección cambia. En ese caso hay que pegar la dirección nueva en `URL_SCRIPT` y publicar el cambio en GitHub.
+Así la dirección `/exec` no cambia y la página sigue conectada. Si se crea una implementación nueva con Nueva implementación, la dirección cambia. En ese caso hay que actualizar la página.
+
+1. Copiar la dirección nueva, terminada en `/exec`.
+2. Pegarla en `URL_SCRIPT`, al inicio del código de `index.html`, y en la sección Direcciones de este documento.
+3. Hacer commit y push a la rama `main`. GitHub Pages publica el cambio en uno o dos minutos.
+4. Abrir la página publicada con la casilla "Juego de prueba" marcada y revisar que la barra superior muestre "Registros pendientes: 0" al terminar una ronda.
 
 ## Uso en clase
 
