@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Juego del impostor sobre ética etnográfica. Etnografía y Campesinado, UNAL Palmira.">
+<title>Juego del impostor</title>
+<style>
+  :root {
+    --fondo: #f5f3ec;
+    --superficie: #ffffff;
+    --superficie-2: #ece9df;
+    --texto: #14130f;
+    --texto-suave: #45423b;
+    --borde: #bdb8a9;
+    --primario: #1d5236;
+    --primario-texto: #ffffff;
+    --seleccion: #dcebe1;
+    --aviso-fondo: #ffeeb8;
+    --aviso-texto: #4d3500;
+    --ok-fondo: #d9eedf;
+    --ok-texto: #12402a;
+    --error: #9e1f17;
+    --foco: #c26a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #111310;
+      --superficie: #1b1e1a;
+      --superficie-2: #262a24;
+      --texto: #f4f2eb;
+      --texto-suave: #c9c5b8;
+      --borde: #555a50;
+      --primario: #86d6a2;
+      --primario-texto: #0a1a10;
+      --seleccion: #20362a;
+      --aviso-fondo: #4b3a0a;
+      --aviso-texto: #ffe6a0;
+      --ok-fondo: #1d3a28;
+      --ok-texto: #c4f0d2;
+      --error: #ff9a8f;
+      --foco: #ffc35c;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font: 18px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  #app {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 16px calc(28px + env(safe-area-inset-bottom));
+  }
+  h1 { font-size: 1.75rem; line-height: 1.15; margin: 6px 0 10px; }
+  h2 { font-size: 1.2rem; line-height: 1.2; margin: 22px 0 8px; }
+  p { margin: 0 0 10px; }
+  .nota { color: var(--texto-suave); font-size: .95rem; }
+  .subtitulo { color: var(--texto-suave); font-size: 1rem; margin-bottom: 18px; }
+
+  /* Barra superior */
+  .barra {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+    gap: 6px 10px; padding: 10px 0; margin-bottom: 14px;
+    border-bottom: 1px solid var(--borde);
+    font-size: .85rem; color: var(--texto-suave);
+  }
+  .insignia {
+    display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px;
+    background: var(--aviso-fondo); color: var(--aviso-texto); font-weight: 700;
+  }
+  .estado-envio { padding: 2px 9px; border-radius: 999px; font-weight: 700; }
+  .estado-envio.aviso { background: var(--aviso-fondo); color: var(--aviso-texto); }
+  .estado-envio.pendiente { background: var(--aviso-fondo); color: var(--aviso-texto); }
+  .estado-envio.ok { background: var(--ok-fondo); color: var(--ok-texto); }
+
+  /* Botones */
+  .boton {
+    display: block; width: 100%; min-height: 56px; margin: 12px 0 0; padding: 14px 18px;
+    border: 2px solid transparent; border-radius: 12px;
+    font: inherit; font-size: 1.1rem; font-weight: 700; line-height: 1.2;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .boton-primario { background: var(--primario); color: var(--primario-texto); }
+  .boton-secundario { background: var(--superficie); color: var(--texto); border-color: var(--primario); }
+  .boton:disabled { opacity: .45; cursor: default; }
+  .boton-enlace {
+    display: block; margin: 22px auto 0; padding: 10px 14px; min-height: 44px;
+    background: none; border: 0; color: var(--texto-suave);
+    font: inherit; font-size: .95rem; text-decoration: underline; cursor: pointer;
+  }
+  .par-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .par-botones .boton { margin-top: 12px; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 3px solid var(--foco); outline-offset: 2px;
+  }
+
+  /* Formulario de inicio */
+  fieldset { border: 0; padding: 0; margin: 0 0 16px; }
+  legend, label.titulo-campo { display: block; font-weight: 700; margin-bottom: 6px; padding: 0; }
+  .segmentos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .segmento {
+    min-height: 56px; border: 2px solid var(--borde); border-radius: 12px;
+    background: var(--superficie); color: var(--texto);
+    font: inherit; font-size: 1.25rem; font-weight: 800; cursor: pointer; touch-action: manipulation;
+  }
+  .segmento[aria-pressed="true"] { background: var(--primario); border-color: var(--primario); color: var(--primario-texto); }
+  .casilla {
+    display: flex; align-items: center; gap: 12px; min-height: 52px; margin: 0 0 16px;
+    padding: 8px 12px; border: 2px solid var(--borde); border-radius: 12px; background: var(--superficie);
+    font-weight: 600; cursor: pointer;
+  }
+  .casilla input { width: 26px; height: 26px; margin: 0; accent-color: var(--primario); flex: none; }
+  .fila-agregar { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .fila-agregar .boton { margin: 0; width: auto; }
+  input[type="text"], textarea {
+    width: 100%; min-height: 56px; padding: 12px 14px;
+    border: 2px solid var(--borde); border-radius: 12px;
+    background: var(--superficie); color: var(--texto); font: inherit;
+  }
+  textarea { min-height: 84px; resize: vertical; }
+  .contador { margin: 12px 0 6px; font-weight: 700; }
+  .lista-nombres { list-style: none; margin: 0; padding: 0; }
+  .lista-nombres li {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 6px 6px 6px 14px; margin-bottom: 6px;
+    background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px;
+  }
+  .lista-nombres span { overflow-wrap: anywhere; }
+  .boton-quitar {
+    flex: none; min-height: 44px; padding: 8px 14px; border-radius: 8px;
+    border: 2px solid var(--borde); background: var(--superficie-2); color: var(--texto);
+    font: inherit; font-size: .95rem; font-weight: 700; cursor: pointer;
+  }
+  .mensaje { min-height: 1.45em; margin: 10px 0 0; color: var(--error); font-weight: 700; }
+  .mensaje:empty { display: none; }
+  .aviso-retomado {
+    padding: 10px 12px; border-radius: 10px; background: var(--aviso-fondo); color: var(--aviso-texto);
+    font-weight: 600; font-size: .95rem;
+  }
+
+  /* Paso del celular */
+  .pantalla-paso { padding-top: 6vh; text-align: center; }
+  .paso-indicador { color: var(--texto-suave); font-weight: 700; }
+  .paso-titulo { font-size: 1.6rem; font-weight: 700; margin: 10px 0 18px; }
+  .paso-nombre { display: block; margin-top: 6px; font-size: 2.3rem; font-weight: 800; overflow-wrap: anywhere; }
+
+  /* Pantalla privada. Las dos versiones comparten tamaño y disposición. */
+  .pantalla-privada { padding-top: 14px; }
+  .privada {
+    display: grid;
+    grid-template-rows: 1.4rem 5.5rem 1.6rem 10.5rem 6.5rem;
+    gap: 8px;
+    padding: 14px;
+    background: var(--superficie);
+    border: 2px solid var(--borde);
+    border-radius: 16px;
+  }
+  .privada > * { margin: 0; min-height: 0; }
+  .privada-etiqueta {
+    font-size: .85rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+  .privada-palabra {
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    font-size: clamp(1.45rem, 7.2vw, 2.4rem); font-weight: 800; line-height: 1.1;
+    overflow-wrap: anywhere; hyphens: auto;
+  }
+  .privada-fuente { text-align: center; font-weight: 700; color: var(--texto-suave); overflow: hidden; }
+  .privada-caja {
+    padding: 12px; overflow-y: auto; border-radius: 10px;
+    background: var(--superficie-2); font-size: .98rem; line-height: 1.4;
+  }
+  .privada-indicacion {
+    padding: 10px 12px; overflow-y: auto; border-radius: 6px;
+    border-left: 5px solid var(--primario); background: var(--seleccion);
+    font-size: .95rem; font-weight: 700; line-height: 1.35;
+  }
+
+  /* Pistas */
+  .vueltas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .vuelta { padding: 10px 12px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; }
+  .vuelta h2 { margin: 0 0 6px; font-size: 1rem; }
+  .vuelta ol { margin: 0; padding-left: 1.6em; }
+  .vuelta li { padding: 3px 0; overflow-wrap: anywhere; }
+  .vuelta li.inicia { font-weight: 800; }
+  .cronometro {
+    margin-top: 16px; padding: 12px 14px; text-align: center;
+    background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px;
+  }
+  .cronometro h2 { margin: 0 0 6px; }
+  .reloj { margin: 4px 0 0; font-size: 2.6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .reloj.cumplido { color: var(--error); }
+
+  /* Acusación */
+  .opciones { display: grid; gap: 8px; }
+  .opcion {
+    min-height: 56px; padding: 12px 16px; text-align: left;
+    border: 2px solid var(--borde); border-radius: 12px; background: var(--superficie); color: var(--texto);
+    font: inherit; font-weight: 700; cursor: pointer; touch-action: manipulation; overflow-wrap: anywhere;
+  }
+  .opcion[aria-checked="true"] { border-color: var(--primario); background: var(--seleccion); box-shadow: inset 0 0 0 2px var(--primario); }
+
+  /* Resultado y revelación */
+  .resultado-titulo { font-size: 2rem; text-align: center; margin: 4vh 0 12px; }
+  .resultado-texto { text-align: center; font-size: 1.15rem; }
+  .revelacion {
+    padding: 16px; background: var(--superficie); border: 2px solid var(--primario); border-radius: 16px;
+  }
+  .revelacion-concepto { font-size: 2rem; font-weight: 800; line-height: 1.1; margin: 2px 0 6px; overflow-wrap: anywhere; hyphens: auto; }
+  .revelacion-fuente { font-weight: 700; color: var(--texto-suave); }
+  .revelacion-contraste {
+    margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--seleccion); font-weight: 600;
+  }
+  .resumen-ronda { margin-top: 14px; font-weight: 600; }
+
+  /* Tablas */
+  table { width: 100%; border-collapse: collapse; background: var(--superficie); border-radius: 12px; overflow: hidden; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid var(--borde); text-align: left; vertical-align: top; }
+  th { background: var(--superficie-2); font-size: .9rem; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.nombre { overflow-wrap: anywhere; }
+  .tabla-reglas td, .tabla-reglas th { font-size: .95rem; }
+  .resumen-rondas { padding-left: 1.4em; }
+  .resumen-rondas li { margin-bottom: 6px; }
+
+  .reglas li { margin-bottom: 8px; }
+  .referencias { margin-top: 30px; padding-top: 12px; border-top: 1px solid var(--borde); font-size: .85rem; color: var(--texto-suave); }
+  .referencias h2 { font-size: .95rem; margin-top: 0; }
+  .referencias p { padding-left: 1.5em; text-indent: -1.5em; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript><p style="padding:16px">Esta herramienta necesita JavaScript.</p></noscript>
+<script>
+'use strict';
+
+/* ---------- Configuración ---------- */
+
+// Dirección de la aplicación web de Apps Script. Termina en /exec.
+const URL_SCRIPT = 'PEGAR_AQUI_LA_URL_DEL_APPS_SCRIPT';
+
+const CURSO = '5008868';
+const SESION = '7';
+const ACTIVIDAD = 'juego-impostor';
+const ACTIVIDAD_PRUEBA = 'prueba';
+const GRUPOS = ['A', 'B', 'C', 'D'];
+const MIN_PARTICIPANTES = 3;
+const MAX_PARTICIPANTES = 10;
+const SEGUNDOS_DISCUSION = 60;
+const ESPERA_REINTENTO = 15000;
+const ESPERA_RESPUESTA = 20000;
+const MAX_PISTA = 200;
+
+/* ---------- Puntaje ---------- */
+
+const PUNTOS = {
+  descubiertoNoAdivina: { impostor: -1, grupo: 1 },
+  descubiertoAdivina: { impostor: 1, grupo: 0 },
+  acusacionErrada: { impostor: 2, grupo: -1 }
+};
+
+/* ---------- Conceptos ---------- */
+
+const CONCEPTOS = [
+  {
+    nombre: 'Comunicación',
+    fuente: 'Freire, cap. 3',
+    definicion: 'Coparticipación de sujetos en el acto de pensar sobre un objeto que los mediatiza. Implica reciprocidad.',
+    contraste: 'Extensión'
+  },
+  {
+    nombre: 'Problematización',
+    fuente: 'Freire, cap. 1',
+    definicion: 'Presentación de la situación concreta como problema, para que las personas la capten críticamente y actúen sobre ella.',
+    contraste: 'Persuasión'
+  },
+  {
+    nombre: 'Diálogo',
+    fuente: 'Freire, cap. 3',
+    definicion: 'Encuentro de sujetos interlocutores que buscan juntos la significación de los significados.',
+    contraste: 'Invasión cultural'
+  },
+  {
+    nombre: 'Concientización',
+    fuente: 'Freire, cap. 1',
+    definicion: 'Proceso por el cual las personas se apropian críticamente de la posición que ocupan, con los demás, en el mundo.',
+    contraste: 'Domesticación'
+  },
+  {
+    nombre: 'Agrónomo-educador',
+    fuente: 'Freire, caps. 1 y 2',
+    definicion: 'Técnico que educa y se educa con los campesinos y problematiza con ellos la realidad en que trabajan.',
+    contraste: 'Extensionista'
+  },
+  {
+    nombre: 'Etnógrafo comprometido',
+    fuente: 'Restrepo, cap. 4',
+    definicion: 'Etnógrafo que toma partido por las luchas de las comunidades con las que trabaja y busca un conocimiento útil para mejorar su vida.',
+    contraste: 'Etnógrafo asaltante'
+  },
+  {
+    nombre: 'Devolución de resultados',
+    fuente: 'Restrepo, cap. 4',
+    definicion: 'Regreso de los resultados a las personas estudiadas, en formatos escritos, visuales u orales que puedan apropiar.',
+    contraste: 'Conocimiento-florero'
+  },
+  {
+    nombre: 'Consentimiento informado',
+    fuente: 'Restrepo, cap. 4',
+    definicion: 'Conocimiento pleno de las personas sobre el objeto y los propósitos del estudio, con su aceptación explícita.',
+    contraste: 'Grabación oculta'
+  },
+  {
+    nombre: 'Anonimato',
+    fuente: 'Restrepo, cap. 4',
+    definicion: 'Protección de la identidad de quien confía información que podría ponerlo en riesgo, con seudónimos o cambios de lugar y tiempo.',
+    contraste: 'Exposición'
+  },
+  {
+    nombre: 'Financiador declarado',
+    fuente: 'Restrepo, cap. 4',
+    definicion: 'Información clara sobre quién contrata o financia el estudio, aunque la entidad no sea bien recibida en el lugar.',
+    contraste: 'Financiador oculto'
+  },
+  {
+    nombre: 'Retribución acordada',
+    fuente: 'Restrepo, cap. 4',
+    definicion: 'Compromiso pactado con la organización y cumplido por el investigador.',
+    contraste: 'Pago por información'
+  },
+  {
+    nombre: 'Simetría en los datos',
+    fuente: 'Restrepo, cap. 4',
+    definicion: 'Tratamiento equivalente de los datos que apoyan la interpretación y de los que la contradicen.',
+    contraste: 'Maquillaje de datos'
+  },
+  {
+    nombre: 'Respeto por los ritmos',
+    fuente: 'Restrepo, cap. 4',
+    definicion: 'Atención a la cotidianidad de las personas para decidir cuándo y cómo preguntar u observar.',
+    contraste: 'Etnógrafo paracaidista'
+  }
+];
+
+const REFERENCIAS = [
+  'Freire, P. (1973). <em>¿Extensión o comunicación? La concientización en el medio rural</em>. Siglo XXI Editores.',
+  'Restrepo, E. <em>Etnografía. Alcances, técnicas y éticas</em> (edición revisada y ampliada). Fondo Editorial UNCP. Capítulo 4, Consideraciones éticas.'
+];
+
+/* ---------- Almacenamiento local ---------- */
+
+const CLAVE_ESTADO = 'eyc-impostor-estado';
+const CLAVE_COLA = 'eyc-impostor-cola';
+const VERSION_ESTADO = 1;
+
+function leerLocal(clave, defecto) {
+  try {
+    const texto = localStorage.getItem(clave);
+    return texto ? JSON.parse(texto) : defecto;
+  } catch (e) {
+    return defecto;
+  }
+}
+
+function guardarLocal(clave, valor) {
+  try {
+    localStorage.setItem(clave, JSON.stringify(valor));
+  } catch (e) {
+    // Sin almacenamiento local el juego sigue en memoria.
+  }
+}
+
+/* ---------- Azar ---------- */
+
+function azar(n) {
+  const limite = Math.floor(0x100000000 / n) * n;
+  const valor = new Uint32Array(1);
+  do {
+    crypto.getRandomValues(valor);
+  } while (valor[0] >= limite);
+  return valor[0] % n;
+}
+
+function barajar(lista) {
+  const copia = lista.slice();
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = azar(i + 1);
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
+
+function indices(n) {
+  return Array.from({ length: n }, (_, i) => i);
+}
+
+function codigoAzar(largo) {
+  const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let codigo = '';
+  for (let i = 0; i < largo; i++) codigo += letras[azar(letras.length)];
+  return codigo;
+}
+
+/* ---------- Utilidades ---------- */
+
+function esc(texto) {
+  return String(texto === undefined || texto === null ? '' : texto).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+function limpiarTexto(texto, largo) {
+  return String(texto || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, largo);
+}
+
+function claveNombre(texto) {
+  return limpiarTexto(texto, 60).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+function dos(n) {
+  return String(n).padStart(2, '0');
+}
+
+function horaDispositivo() {
+  const d = new Date();
+  return `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())} ${dos(d.getHours())}:${dos(d.getMinutes())}:${dos(d.getSeconds())}`;
+}
+
+function formatoPuntos(p) {
+  if (p > 0) return '+' + p;
+  if (p < 0) return '−' + Math.abs(p);
+  return '0';
+}
+
+function scriptConfigurado() {
+  return /^https:\/\/script\.google\.com\/.+\/exec$/.test(URL_SCRIPT);
+}
+
+function actividadActual() {
+  return estado.prueba ? ACTIVIDAD_PRUEBA : ACTIVIDAD;
+}
+
+/* ---------- Estado del juego ---------- */
+
+const PANTALLAS_DE_JUEGO = ['paso', 'privada', 'pistas', 'acusacion', 'resultado', 'revelacion'];
+
+function estadoNuevo(previo) {
+  return {
+    version: VERSION_ESTADO,
+    pantalla: 'inicio',
+    grupo: previo ? previo.grupo : '',
+    prueba: previo ? previo.prueba : false,
+    nombres: previo ? previo.nombres.slice() : [],
+    idJuego: '',
+    rondas: [],
+    ronda: 0,
+    visor: 0,
+    acusado: null,
+    resultados: [],
+    pistaBorrador: '',
+    registros: []
+  };
+}
+
+function estadoValido(e) {
+  if (!e || e.version !== VERSION_ESTADO || !Array.isArray(e.nombres) || !Array.isArray(e.rondas)) return false;
+  if (!Array.isArray(e.resultados) || !Array.isArray(e.registros)) return false;
+  if (PANTALLAS_DE_JUEGO.includes(e.pantalla) || e.pantalla === 'final') {
+    return e.rondas.length === e.nombres.length && e.rondas.length >= MIN_PARTICIPANTES;
+  }
+  return e.pantalla === 'inicio' || e.pantalla === 'reglas';
+}
+
+function guardarEstado() {
+  // La pantalla privada nunca se guarda. Al recargar, el juego vuelve al paso del celular.
+  const copia = Object.assign({}, estado, { pantalla: estado.pantalla === 'privada' ? 'paso' : estado.pantalla });
+  guardarLocal(CLAVE_ESTADO, copia);
+}
+
+let estado = leerLocal(CLAVE_ESTADO, null);
+let avisoRetomado = false;
+if (!estadoValido(estado)) {
+  estado = estadoNuevo();
+} else if (PANTALLAS_DE_JUEGO.includes(estado.pantalla)) {
+  avisoRetomado = true;
+}
+if (estado.pantalla === 'reglas') estado.pantalla = 'inicio';
+
+let mensajeInicio = '';
+let seleccionAcusado = null;
+let ignorarClicsHasta = 0;
+
+function enJuego() {
+  return PANTALLAS_DE_JUEGO.includes(estado.pantalla);
+}
+
+function rondaActual() {
+  return estado.rondas[estado.ronda];
+}
+
+function ordenTurnos(ronda) {
+  const n = estado.nombres.length;
+  return indices(n).map(k => (ronda.inicia + k) % n);
+}
+
+function totalesHasta(r) {
+  const totales = estado.nombres.map(() => 0);
+  for (let k = 0; k <= r && k < estado.resultados.length; k++) {
+    const res = estado.resultados[k];
+    if (!res) continue;
+    res.puntos.forEach((p, i) => { totales[i] += p; });
+  }
+  return totales;
+}
+
+function clasificacion(r) {
+  const totales = totalesHasta(r);
+  const filas = estado.nombres
+    .map((nombre, i) => ({ indice: i, nombre, puntos: totales[i] }))
+    .sort((a, b) => b.puntos - a.puntos || a.nombre.localeCompare(b.nombre, 'es'));
+  let puesto = 0;
+  filas.forEach((f, k) => {
+    if (k === 0 || f.puntos !== filas[k - 1].puntos) puesto = k + 1;
+    f.puesto = puesto;
+  });
+  return filas;
+}
+
+function textoResultado(res, ronda) {
+  const impostor = estado.nombres[ronda.impostor];
+  if (!res.acierto) {
+    return `El grupo acusó a ${estado.nombres[res.acusado]}. El impostor era ${impostor}.`;
+  }
+  return res.adivino
+    ? `El grupo descubrió a ${impostor}, pero adivinó el concepto.`
+    : `El grupo descubrió a ${impostor} y no adivinó el concepto.`;
+}
+
+/* ---------- Cola de envío ---------- */
+
+let cola = leerLocal(CLAVE_COLA, []);
+if (!Array.isArray(cola)) cola = [];
+let enviando = false;
+
+function guardarCola() {
+  guardarLocal(CLAVE_COLA, cola);
+}
+
+function idsEnCola() {
+  return new Set(cola.map(envio => envio.id));
+}
+
+function encolar(tipo, registros) {
+  const envio = { id: codigoAzar(16), tipo, registros };
+  cola.push(envio);
+  guardarCola();
+  registros.forEach(datos => estado.registros.push({ tipo, envio: envio.id, datos }));
+  guardarEstado();
+  pintarEstadoEnvio();
+  enviarPendientes();
+}
+
+async function enviarEnvio(envio) {
+  const control = new AbortController();
+  const limite = setTimeout(() => control.abort(), ESPERA_RESPUESTA);
+  try {
+    const respuesta = await fetch(URL_SCRIPT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ id_envio: envio.id, tipo: envio.tipo, registros: envio.registros }),
+      redirect: 'follow',
+      signal: control.signal
+    });
+    if (!respuesta.ok) return 'red';
+    const datos = await respuesta.json();
+    return datos && datos.ok === true ? 'ok' : 'rechazo';
+  } catch (e) {
+    return 'red';
+  } finally {
+    clearTimeout(limite);
+  }
+}
+
+async function enviarPendientes() {
+  if (!scriptConfigurado() || enviando || cola.length === 0) {
+    pintarEstadoEnvio();
+    return;
+  }
+  enviando = true;
+  try {
+    const ids = cola.map(envio => envio.id);
+    for (const id of ids) {
+      const envio = cola.find(e => e.id === id);
+      if (!envio) continue;
+      const resultado = await enviarEnvio(envio);
+      // Sin conexión se detiene y reintenta más tarde. Un rechazo deja el envío en la cola.
+      if (resultado === 'red') break;
+      if (resultado === 'ok') {
+        cola = cola.filter(e => e.id !== id);
+        guardarCola();
+        pintarEstadoEnvio();
+      }
+    }
+  } finally {
+    enviando = false;
+    pintarEstadoEnvio();
+  }
+}
+
+function resumenEnvioJuego() {
+  const pendientesIds = idsEnCola();
+  const total = estado.registros.length;
+  const pendientes = estado.registros.filter(r => pendientesIds.has(r.envio)).length;
+  const base = `Registros de este juego: ${total}. Enviados: ${total - pendientes}. Pendientes: ${pendientes}.`;
+  return scriptConfigurado() ? base : base + ' Sin conexión a la hoja. Use el respaldo en CSV.';
+}
+
+function pintarEstadoEnvio() {
+  const pendientes = cola.reduce((suma, envio) => suma + envio.registros.length, 0);
+  const elemento = document.getElementById('estado-envio');
+  if (elemento) {
+    let texto;
+    let clase;
+    if (!scriptConfigurado()) {
+      texto = 'Sin conexión a la hoja';
+      clase = 'aviso';
+    } else if (pendientes > 0) {
+      texto = 'Registros pendientes: ' + pendientes;
+      clase = 'pendiente';
+    } else {
+      texto = 'Registros pendientes: 0';
+      clase = 'ok';
+    }
+    elemento.textContent = texto;
+    elemento.className = 'estado-envio ' + clase;
+  }
+  const resumen = document.getElementById('resumen-envio');
+  if (resumen) resumen.textContent = resumenEnvioJuego();
+}
+
+/* ---------- Respaldo CSV ---------- */
+
+const COLUMNAS_CSV = [
+  ['Tipo', r => (r.tipo === 'participantes' ? 'Participante' : 'Ronda')],
+  ['Estado', (r, pendientes) => (pendientes.has(r.envio) ? 'Pendiente' : 'Enviado')],
+  ['Curso', r => r.datos.curso],
+  ['Sesión', r => r.datos.sesion],
+  ['Actividad', r => r.datos.actividad],
+  ['Id de juego', r => r.datos.id_juego],
+  ['Grupo', r => r.datos.grupo],
+  ['Ronda', r => r.datos.ronda],
+  ['Total de rondas', r => r.datos.total_rondas],
+  ['Nombre', r => r.datos.nombre],
+  ['Rol', r => r.datos.rol],
+  ['Concepto', r => r.datos.concepto],
+  ['Fuente', r => r.datos.fuente],
+  ['Acusado', r => r.datos.acusado],
+  ['Acierto del grupo', r => r.datos.acierto_grupo],
+  ['Impostor adivinó', r => r.datos.impostor_adivino],
+  ['Puntos de la ronda', r => r.datos.puntos_ronda],
+  ['Puntos acumulados', r => r.datos.puntos_acumulados],
+  ['Pista que delató', r => r.datos.pista],
+  ['Hora del dispositivo', r => r.datos.hora]
+];
+
+function celdaCsv(valor) {
+  if (typeof valor === 'number') return String(valor);
+  let texto = valor === undefined || valor === null ? '' : String(valor);
+  if (/^[=+\-@]/.test(texto)) texto = "'" + texto;
+  return '"' + texto.replace(/"/g, '""') + '"';
+}
+
+function generarCsv() {
+  const pendientes = idsEnCola();
+  const filas = [COLUMNAS_CSV.map(c => celdaCsv(c[0])).join(',')];
+  estado.registros.forEach(r => {
+    filas.push(COLUMNAS_CSV.map(c => celdaCsv(c[1](r, pendientes))).join(','));
+  });
+  return '﻿' + filas.join('\r\n') + '\r\n';
+}
+
+function descargarCsv() {
+  const blob = new Blob([generarCsv()], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = `respaldo-impostor-${estado.idJuego || 'juego'}.csv`;
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+/* ---------- Cronómetro ---------- */
+
+const cronometro = { fin: 0, intervalo: null, cumplido: false };
+let audio = null;
+
+function prepararAudio() {
+  try {
+    const Contexto = window.AudioContext || window.webkitAudioContext;
+    if (Contexto && !audio) audio = new Contexto();
+    if (audio && audio.state === 'suspended') audio.resume();
+  } catch (e) {
+    audio = null;
+  }
+}
+
+function avisoFinal() {
+  try {
+    if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+  } catch (e) { /* sin vibración */ }
+  try {
+    if (!audio) return;
+    const oscilador = audio.createOscillator();
+    const volumen = audio.createGain();
+    oscilador.frequency.value = 880;
+    volumen.gain.value = 0.2;
+    oscilador.connect(volumen);
+    volumen.connect(audio.destination);
+    oscilador.start();
+    oscilador.stop(audio.currentTime + 0.5);
+  } catch (e) { /* sin sonido */ }
+}
+
+function detenerCronometro() {
+  if (cronometro.intervalo) clearInterval(cronometro.intervalo);
+  cronometro.intervalo = null;
+}
+
+function reiniciarCronometro() {
+  detenerCronometro();
+  cronometro.fin = 0;
+  cronometro.cumplido = false;
+}
+
+function segundosRestantes() {
+  if (!cronometro.intervalo) return cronometro.cumplido ? 0 : SEGUNDOS_DISCUSION;
+  return Math.max(0, Math.ceil((cronometro.fin - Date.now()) / 1000));
+}
+
+function pintarCronometro() {
+  const reloj = document.getElementById('reloj');
+  const boton = document.getElementById('boton-cronometro');
+  if (!reloj || !boton) return;
+  const s = segundosRestantes();
+  reloj.textContent = `${Math.floor(s / 60)}:${dos(s % 60)}`;
+  reloj.classList.toggle('cumplido', cronometro.cumplido);
+  const estadoReloj = document.getElementById('estado-reloj');
+  if (estadoReloj) estadoReloj.textContent = cronometro.cumplido ? 'Tiempo cumplido.' : '';
+  if (cronometro.intervalo) boton.textContent = 'Detener cronómetro';
+  else boton.textContent = cronometro.cumplido ? 'Iniciar de nuevo' : 'Iniciar cronómetro de un minuto';
+}
+
+function alternarCronometro() {
+  if (cronometro.intervalo) {
+    reiniciarCronometro();
+    pintarCronometro();
+    return;
+  }
+  prepararAudio();
+  cronometro.cumplido = false;
+  cronometro.fin = Date.now() + SEGUNDOS_DISCUSION * 1000;
+  cronometro.intervalo = setInterval(() => {
+    if (segundosRestantes() === 0) {
+      detenerCronometro();
+      cronometro.cumplido = true;
+      avisoFinal();
+    }
+    pintarCronometro();
+  }, 250);
+  pintarCronometro();
+}
+
+/* ---------- Pantallas ---------- */
+
+function encabezado() {
+  // La pantalla privada no lleva barra. Así cabe completa en celulares pequeños.
+  if (estado.pantalla === 'privada') return '';
+  let texto = 'Juego del impostor';
+  if (enJuego()) texto = `Grupo ${esc(estado.grupo)} · Ronda ${estado.ronda + 1} de ${estado.rondas.length}`;
+  if (estado.pantalla === 'final') texto = `Grupo ${esc(estado.grupo)} · Juego terminado`;
+  const prueba = estado.prueba && (enJuego() || estado.pantalla === 'final') ? '<span class="insignia">Prueba</span>' : '';
+  return `<header class="barra"><span>${texto}${prueba}</span><span id="estado-envio" class="estado-envio" role="status" aria-live="polite"></span></header>`;
+}
+
+function referencias() {
+  return `<footer class="referencias"><h2>Referencias</h2>${REFERENCIAS.map(r => `<p>${r}</p>`).join('')}</footer>`;
+}
+
+function avisoDeRetomado() {
+  if (!avisoRetomado) return '';
+  avisoRetomado = false;
+  return '<p class="aviso-retomado">Se retomó el juego guardado en este celular.</p>';
+}
+
+function pantallaInicio() {
+  const n = estado.nombres.length;
+  const lleno = n >= MAX_PARTICIPANTES;
+  const grupos = GRUPOS.map(g => (
+    `<button type="button" class="segmento" data-accion="grupo" data-valor="${g}" aria-pressed="${estado.grupo === g}">${g}</button>`
+  )).join('');
+  const lista = n === 0
+    ? '<p class="nota">Todavía no hay participantes.</p>'
+    : `<ul class="lista-nombres">${estado.nombres.map((nombre, i) => (
+      `<li><span>${esc(nombre)}</span><button type="button" class="boton-quitar" data-accion="quitar" data-indice="${i}" aria-label="Quitar a ${esc(nombre)}">Quitar</button></li>`
+    )).join('')}</ul>`;
+  return `
+    <main>
+      <h1>Juego del impostor</h1>
+      <p class="subtitulo">Etnografía y Campesinado (5008868)<br>Sesión 7. Ética del encuentro y política de la etnografía</p>
+      <fieldset>
+        <legend>Grupo</legend>
+        <div class="segmentos">${grupos}</div>
+      </fieldset>
+      <label class="casilla"><input type="checkbox" id="prueba" ${estado.prueba ? 'checked' : ''}><span>Juego de prueba</span></label>
+      <form id="form-nombre" autocomplete="off" novalidate>
+        <label class="titulo-campo" for="nombre">Participantes</label>
+        <p class="nota" id="ayuda-nombre">Escribe nombre y apellido, como aparecen en la lista del curso. Mínimo ${MIN_PARTICIPANTES} y máximo ${MAX_PARTICIPANTES} personas.</p>
+        <div class="fila-agregar">
+          <input id="nombre" name="nombre" type="text" maxlength="60" autocapitalize="words" autocomplete="off" spellcheck="false" aria-describedby="ayuda-nombre" ${lleno ? 'disabled' : ''}>
+          <button type="submit" class="boton boton-secundario" ${lleno ? 'disabled' : ''}>Agregar</button>
+        </div>
+      </form>
+      <p class="contador">${n} de ${MAX_PARTICIPANTES} participantes</p>
+      ${lista}
+      <p id="mensaje" class="mensaje" role="alert">${esc(mensajeInicio)}</p>
+      <button type="button" class="boton boton-secundario" data-accion="reglas">Ver reglas</button>
+      <button type="button" class="boton boton-primario" data-accion="iniciar">Iniciar juego</button>
+    </main>
+    ${referencias()}`;
+}
+
+function tablaPuntaje() {
+  const fila = (texto, caso) => `<tr><td>${texto}</td><td class="num">${formatoPuntos(caso.impostor)}</td><td class="num">${formatoPuntos(caso.grupo)}</td></tr>`;
+  return `
+    <table class="tabla-reglas">
+      <thead><tr><th>Situación</th><th class="num">Impostor</th><th class="num">Cada uno de los demás</th></tr></thead>
+      <tbody>
+        ${fila('El grupo acusa al impostor y el impostor no adivina el concepto', PUNTOS.descubiertoNoAdivina)}
+        ${fila('El grupo acusa al impostor y el impostor adivina el concepto', PUNTOS.descubiertoAdivina)}
+        ${fila('El grupo acusa a otra persona', PUNTOS.acusacionErrada)}
+      </tbody>
+    </table>`;
+}
+
+function pantallaReglas() {
+  return `
+    <main>
+      <h1>Reglas</h1>
+      <ol class="reglas">
+        <li>El juego tiene tantas rondas como participantes. Cada persona es impostor una sola vez, en un orden al azar.</li>
+        <li>En cada ronda el celular pasa de mano en mano. Cada persona ve su pantalla en privado y luego la oculta.</li>
+        <li>El grupo ve el concepto, su fuente y una definición breve. El impostor solo ve la palabra IMPOSTOR.</li>
+        <li>Por turnos, cada persona dice en voz alta una palabra o una expresión corta relacionada con el concepto. Se hacen dos vueltas.</li>
+        <li>El grupo discute un minuto y acusa por consenso a una persona.</li>
+        <li>Si la persona acusada es el impostor, dice en voz alta cuál cree que es el concepto. El grupo marca si acertó.</li>
+        <li>La herramienta revela el concepto y suma los puntos. Al final muestra la clasificación del grupo.</li>
+      </ol>
+      <h2>Puntaje</h2>
+      ${tablaPuntaje()}
+      <button type="button" class="boton boton-primario" data-accion="volver">Volver</button>
+    </main>
+    ${referencias()}`;
+}
+
+function pantallaPaso() {
+  const nombre = esc(estado.nombres[estado.visor]);
+  return `
+    <main class="pantalla-paso">
+      ${avisoDeRetomado()}
+      <p class="paso-indicador">Persona ${estado.visor + 1} de ${estado.nombres.length}</p>
+      <h1 class="paso-titulo">Pasa el celular a <span class="paso-nombre">${nombre}</span></h1>
+      <p class="nota">Solo esta persona debe mirar la pantalla.</p>
+      <button type="button" class="boton boton-primario" data-accion="ver">Soy ${nombre}, ver mi palabra</button>
+    </main>`;
+}
+
+function pantallaPrivada() {
+  const ronda = rondaActual();
+  const esImpostor = estado.visor === ronda.impostor;
+  // Las dos versiones usan los mismos elementos en el mismo orden y con la misma altura.
+  const contenido = esImpostor
+    ? {
+      palabra: 'IMPOSTOR',
+      fuente: 'Sin fuente',
+      caja: 'No ves el concepto ni su definición. Nadie más sabe que eres el impostor. Si el grupo te acusa, podrás decir en voz alta cuál crees que es el concepto.',
+      indicacion: 'No conoces el concepto. Escucha las pistas, da una pista creíble y trata de adivinarlo.'
+    }
+    : {
+      palabra: ronda.concepto.nombre,
+      fuente: ronda.concepto.fuente,
+      caja: ronda.concepto.definicion,
+      indicacion: 'Da pistas que muestren que entiendes el concepto, sin que el impostor lo adivine.'
+    };
+  return `
+    <main class="pantalla-privada">
+      <div class="privada" id="tarjeta-privada">
+        <p class="privada-etiqueta">Tu palabra</p>
+        <p class="privada-palabra">${esc(contenido.palabra)}</p>
+        <p class="privada-fuente">${esc(contenido.fuente)}</p>
+        <p class="privada-caja">${esc(contenido.caja)}</p>
+        <p class="privada-indicacion">${esc(contenido.indicacion)}</p>
+      </div>
+      <button type="button" class="boton boton-primario" data-accion="ocultar">Ya la vi, ocultar</button>
+    </main>`;
+}
+
+function pantallaPistas() {
+  const ronda = rondaActual();
+  const orden = ordenTurnos(ronda);
+  const n = orden.length;
+  const lista = () => orden.map((i, k) => (
+    `<li class="${k === 0 ? 'inicia' : ''}">${esc(estado.nombres[i])}</li>`
+  )).join('');
+  return `
+    <main>
+      ${avisoDeRetomado()}
+      <h1>Pistas</h1>
+      <p>Por sorteo empieza <strong>${esc(estado.nombres[ronda.inicia])}</strong>. Cada persona dice en voz alta una palabra o una expresión corta relacionada con el concepto.</p>
+      <div class="vueltas">
+        <section class="vuelta"><h2>Primera vuelta</h2><ol>${lista()}</ol></section>
+        <section class="vuelta"><h2>Segunda vuelta</h2><ol start="${n + 1}">${lista()}</ol></section>
+      </div>
+      <section class="cronometro">
+        <h2>Discusión</h2>
+        <p class="nota">El grupo discute un minuto y acusa por consenso a una persona.</p>
+        <p class="reloj" id="reloj" aria-live="off">1:00</p>
+        <p class="nota" id="estado-reloj" role="status"></p>
+        <button type="button" class="boton boton-secundario" id="boton-cronometro" data-accion="cronometro">Iniciar cronómetro de un minuto</button>
+      </section>
+      <button type="button" class="boton boton-primario" data-accion="a-acusacion">Pasar a la acusación</button>
+      <button type="button" class="boton-enlace" data-accion="abandonar">Abandonar el juego</button>
+    </main>`;
+}
+
+function pantallaAcusacion() {
+  const opciones = estado.nombres.map((nombre, i) => (
+    `<button type="button" class="opcion" role="radio" aria-checked="${seleccionAcusado === i}" data-accion="seleccionar" data-indice="${i}">${esc(nombre)}</button>`
+  )).join('');
+  const elegido = seleccionAcusado === null ? '' : ` a ${esc(estado.nombres[seleccionAcusado])}`;
+  return `
+    <main>
+      <h1>Acusación</h1>
+      <p>Toquen el nombre de la persona que el grupo acusa por consenso y confirmen.</p>
+      <div class="opciones" role="radiogroup" aria-label="Persona acusada">${opciones}</div>
+      <button type="button" class="boton boton-primario" id="boton-confirmar" data-accion="confirmar-acusacion" ${seleccionAcusado === null ? 'disabled' : ''}>Confirmar acusación${elegido}</button>
+      <button type="button" class="boton boton-secundario" data-accion="a-pistas">Volver a las pistas</button>
+    </main>`;
+}
+
+function pantallaResultado() {
+  const ronda = rondaActual();
+  const impostor = esc(estado.nombres[ronda.impostor]);
+  if (estado.acusado === ronda.impostor) {
+    return `
+      <main>
+        <h1 class="resultado-titulo">Sí era el impostor</h1>
+        <p class="resultado-texto"><strong>${impostor}</strong>, di en voz alta cuál crees que es el concepto.</p>
+        <p class="resultado-texto nota">El grupo marca si acertó.</p>
+        <div class="par-botones">
+          <button type="button" class="boton boton-primario" data-accion="adivino">Adivinó el concepto</button>
+          <button type="button" class="boton boton-secundario" data-accion="no-adivino">No adivinó</button>
+        </div>
+      </main>`;
+  }
+  return `
+    <main>
+      <h1 class="resultado-titulo">No era el impostor</h1>
+      <p class="resultado-texto">El impostor era <strong>${impostor}</strong>.</p>
+      <button type="button" class="boton boton-primario" data-accion="ver-concepto">Ver el concepto</button>
+    </main>`;
+}
+
+function tablaAcumulada(r) {
+  const res = estado.resultados[r];
+  const filas = clasificacion(r).map(f => (
+    `<tr><td class="nombre">${esc(f.nombre)}</td><td class="num">${formatoPuntos(res.puntos[f.indice])}</td><td class="num"><strong>${formatoPuntos(f.puntos)}</strong></td></tr>`
+  )).join('');
+  return `
+    <table>
+      <thead><tr><th>Nombre</th><th class="num">Ronda</th><th class="num">Acumulado</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>`;
+}
+
+function pantallaRevelacion() {
+  const ronda = rondaActual();
+  const res = estado.resultados[estado.ronda];
+  const c = ronda.concepto;
+  const ultima = estado.ronda === estado.rondas.length - 1;
+  const campoPista = res.acierto
+    ? `<label class="titulo-campo" for="pista" style="margin-top:18px">Pista que delató al impostor</label>
+       <p class="nota">Opcional.</p>
+       <textarea id="pista" maxlength="${MAX_PISTA}" rows="2">${esc(estado.pistaBorrador)}</textarea>`
+    : '';
+  return `
+    <main>
+      ${avisoDeRetomado()}
+      <h1>Revelación</h1>
+      <div class="revelacion">
+        <p class="nota">Concepto de la ronda</p>
+        <p class="revelacion-concepto">${esc(c.nombre)}</p>
+        <p class="revelacion-fuente">${esc(c.fuente)}</p>
+        <p>${esc(c.definicion)}</p>
+        <p class="revelacion-contraste">Para discutir, diferencia con ${esc(c.contraste)}.</p>
+      </div>
+      <p class="resumen-ronda">${esc(textoResultado(res, ronda))}</p>
+      ${campoPista}
+      <h2>Puntaje</h2>
+      ${tablaAcumulada(estado.ronda)}
+      <button type="button" class="boton boton-primario" data-accion="siguiente">${ultima ? 'Ver la clasificación final' : 'Siguiente ronda'}</button>
+    </main>`;
+}
+
+function pantallaFinal() {
+  const ultima = estado.resultados.length - 1;
+  const filas = clasificacion(ultima).map(f => (
+    `<tr><td class="num">${f.puesto}</td><td class="nombre">${esc(f.nombre)}</td><td class="num"><strong>${formatoPuntos(f.puntos)}</strong></td></tr>`
+  )).join('');
+  const rondas = estado.rondas.map((ronda, r) => {
+    const res = estado.resultados[r];
+    if (!res) return '';
+    return `<li><strong>${esc(ronda.concepto.nombre)}</strong>. ${esc(textoResultado(res, ronda))}</li>`;
+  }).join('');
+  return `
+    <main>
+      <h1>Clasificación final</h1>
+      <p class="nota">Grupo ${esc(estado.grupo)} · ${estado.rondas.length} rondas · Juego ${esc(estado.idJuego)}</p>
+      <table>
+        <thead><tr><th class="num">Puesto</th><th>Nombre</th><th class="num">Puntos</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+      <h2>Rondas</h2>
+      <ol class="resumen-rondas">${rondas}</ol>
+      <h2>Registro</h2>
+      <p id="resumen-envio"></p>
+      <button type="button" class="boton boton-secundario" data-accion="csv">Descargar respaldo en CSV</button>
+      <button type="button" class="boton boton-primario" data-accion="nuevo">Nuevo juego</button>
+    </main>
+    ${referencias()}`;
+}
+
+const PANTALLAS = {
+  inicio: pantallaInicio,
+  reglas: pantallaReglas,
+  paso: pantallaPaso,
+  privada: pantallaPrivada,
+  pistas: pantallaPistas,
+  acusacion: pantallaAcusacion,
+  resultado: pantallaResultado,
+  revelacion: pantallaRevelacion,
+  final: pantallaFinal
+};
+
+function pintar(opciones) {
+  if (estado.pantalla !== 'pistas') reiniciarCronometro();
+  const app = document.getElementById('app');
+  app.innerHTML = encabezado() + PANTALLAS[estado.pantalla]();
+  pintarEstadoEnvio();
+  pintarCronometro();
+  if (!(opciones && opciones.mantenerScroll)) window.scrollTo(0, 0);
+  // Pausa breve tras cada cambio de pantalla. Evita que un doble toque abra la pantalla siguiente.
+  ignorarClicsHasta = Date.now() + (estado.pantalla === 'paso' ? 900 : 350);
+}
+
+function irA(pantalla, opciones) {
+  estado.pantalla = pantalla;
+  guardarEstado();
+  pintar(opciones);
+}
+
+/* ---------- Acciones ---------- */
+
+function agregarNombre() {
+  const campo = document.getElementById('nombre');
+  if (!campo) return;
+  const nombre = limpiarTexto(campo.value, 60);
+  mensajeInicio = '';
+  if (!nombre) {
+    mensajeInicio = 'Escribe un nombre.';
+  } else if (nombre.split(' ').length < 2) {
+    mensajeInicio = 'Escribe al menos un nombre y un apellido.';
+  } else if (!/\p{L}/u.test(nombre)) {
+    mensajeInicio = 'El nombre debe tener letras.';
+  } else if (estado.nombres.some(otro => claveNombre(otro) === claveNombre(nombre))) {
+    mensajeInicio = 'Ese nombre ya está en la lista.';
+  } else if (estado.nombres.length >= MAX_PARTICIPANTES) {
+    mensajeInicio = `El máximo es de ${MAX_PARTICIPANTES} participantes.`;
+  } else {
+    estado.nombres.push(nombre);
+    guardarEstado();
+  }
+  const valor = mensajeInicio ? campo.value : '';
+  pintar({ mantenerScroll: true });
+  const nuevo = document.getElementById('nombre');
+  if (nuevo && !nuevo.disabled) {
+    nuevo.value = valor;
+    nuevo.focus();
+  }
+}
+
+function iniciarJuego() {
+  const n = estado.nombres.length;
+  mensajeInicio = '';
+  if (!GRUPOS.includes(estado.grupo)) {
+    mensajeInicio = 'Escoge el grupo.';
+  } else if (n < MIN_PARTICIPANTES) {
+    mensajeInicio = `Agrega al menos ${MIN_PARTICIPANTES} participantes. Faltan ${MIN_PARTICIPANTES - n}.`;
+  } else if (n > MAX_PARTICIPANTES || n > CONCEPTOS.length) {
+    mensajeInicio = `El máximo es de ${MAX_PARTICIPANTES} participantes.`;
+  }
+  if (mensajeInicio) {
+    pintar({ mantenerScroll: true });
+    return;
+  }
+  const ahora = new Date();
+  const impostores = barajar(indices(n));
+  const conceptos = barajar(indices(CONCEPTOS.length)).slice(0, n);
+  estado.idJuego = `${ahora.getFullYear()}${dos(ahora.getMonth() + 1)}${dos(ahora.getDate())}-${dos(ahora.getHours())}${dos(ahora.getMinutes())}-${estado.grupo}-${codigoAzar(4)}`;
+  estado.rondas = impostores.map((impostor, r) => ({
+    impostor,
+    concepto: Object.assign({}, CONCEPTOS[conceptos[r]]),
+    inicia: azar(n)
+  }));
+  estado.ronda = 0;
+  estado.visor = 0;
+  estado.acusado = null;
+  estado.resultados = [];
+  estado.registros = [];
+  estado.pistaBorrador = '';
+  estado.pantalla = 'paso';
+  const hora = horaDispositivo();
+  encolar('participantes', estado.nombres.map(nombre => ({
+    curso: CURSO,
+    sesion: SESION,
+    actividad: actividadActual(),
+    id_juego: estado.idJuego,
+    grupo: estado.grupo,
+    nombre,
+    hora
+  })));
+  pintar();
+}
+
+function ocultarPantalla() {
+  if (estado.visor < estado.nombres.length - 1) {
+    estado.visor += 1;
+    irA('paso');
+  } else {
+    irA('pistas');
+  }
+}
+
+function seleccionarAcusado(indice) {
+  seleccionAcusado = indice;
+  document.querySelectorAll('.opcion').forEach(boton => {
+    boton.setAttribute('aria-checked', String(Number(boton.dataset.indice) === indice));
+  });
+  const confirmar = document.getElementById('boton-confirmar');
+  if (confirmar) {
+    confirmar.disabled = false;
+    confirmar.textContent = `Confirmar acusación a ${estado.nombres[indice]}`;
+  }
+}
+
+function confirmarAcusacion() {
+  if (seleccionAcusado === null) return;
+  estado.acusado = seleccionAcusado;
+  seleccionAcusado = null;
+  irA('resultado');
+}
+
+function cerrarRonda(adivino) {
+  const ronda = rondaActual();
+  if (estado.acusado === null) return;
+  const acierto = estado.acusado === ronda.impostor;
+  if (acierto && adivino === null) return;
+  let caso = PUNTOS.acusacionErrada;
+  if (acierto) caso = adivino ? PUNTOS.descubiertoAdivina : PUNTOS.descubiertoNoAdivina;
+  estado.resultados[estado.ronda] = {
+    acusado: estado.acusado,
+    acierto,
+    adivino: acierto ? Boolean(adivino) : null,
+    puntos: estado.nombres.map((_, i) => (i === ronda.impostor ? caso.impostor : caso.grupo)),
+    pista: '',
+    registrado: false
+  };
+  estado.pistaBorrador = '';
+  irA('revelacion');
+}
+
+function siguienteRonda() {
+  const r = estado.ronda;
+  const ronda = rondaActual();
+  const res = estado.resultados[r];
+  if (!res) return;
+  if (!res.registrado) {
+    res.pista = res.acierto ? limpiarTexto(estado.pistaBorrador, MAX_PISTA) : '';
+    res.registrado = true;
+    const acumulados = totalesHasta(r);
+    const hora = horaDispositivo();
+    encolar('registro', estado.nombres.map((nombre, i) => ({
+      curso: CURSO,
+      sesion: SESION,
+      actividad: actividadActual(),
+      id_juego: estado.idJuego,
+      grupo: estado.grupo,
+      ronda: r + 1,
+      total_rondas: estado.rondas.length,
+      nombre,
+      rol: i === ronda.impostor ? 'impostor' : 'grupo',
+      concepto: ronda.concepto.nombre,
+      fuente: ronda.concepto.fuente,
+      acusado: estado.nombres[res.acusado],
+      acierto_grupo: res.acierto ? 'Sí' : 'No',
+      impostor_adivino: res.acierto ? (res.adivino ? 'Sí' : 'No') : 'No aplica',
+      puntos_ronda: res.puntos[i],
+      puntos_acumulados: acumulados[i],
+      pista: res.pista,
+      hora
+    })));
+  }
+  if (r + 1 < estado.rondas.length) {
+    estado.ronda = r + 1;
+    estado.visor = 0;
+    estado.acusado = null;
+    estado.pistaBorrador = '';
+    irA('paso');
+  } else {
+    irA('final');
+  }
+}
+
+function nuevoJuego() {
+  if (!window.confirm('¿Empezar un juego nuevo? El respaldo CSV de este juego dejará de estar disponible en esta pantalla.')) return;
+  estado = estadoNuevo(estado);
+  mensajeInicio = '';
+  irA('inicio');
+}
+
+function abandonarJuego() {
+  if (!window.confirm('¿Abandonar este juego? Los registros ya creados se conservan en la cola de envío.')) return;
+  estado = estadoNuevo(estado);
+  mensajeInicio = '';
+  irA('inicio');
+}
+
+const ACCIONES = {
+  grupo: boton => {
+    estado.grupo = boton.dataset.valor;
+    mensajeInicio = '';
+    guardarEstado();
+    pintar({ mantenerScroll: true });
+  },
+  quitar: boton => {
+    estado.nombres.splice(Number(boton.dataset.indice), 1);
+    mensajeInicio = '';
+    guardarEstado();
+    pintar({ mantenerScroll: true });
+  },
+  reglas: () => irA('reglas'),
+  volver: () => irA('inicio'),
+  iniciar: iniciarJuego,
+  ver: () => irA('privada'),
+  ocultar: ocultarPantalla,
+  cronometro: alternarCronometro,
+  'a-acusacion': () => {
+    seleccionAcusado = null;
+    irA('acusacion');
+  },
+  'a-pistas': () => irA('pistas'),
+  seleccionar: boton => seleccionarAcusado(Number(boton.dataset.indice)),
+  'confirmar-acusacion': confirmarAcusacion,
+  adivino: () => cerrarRonda(true),
+  'no-adivino': () => cerrarRonda(false),
+  'ver-concepto': () => cerrarRonda(null),
+  siguiente: siguienteRonda,
+  csv: descargarCsv,
+  nuevo: nuevoJuego,
+  abandonar: abandonarJuego
+};
+
+/* ---------- Eventos ---------- */
+
+// El juego ocupa una sola entrada del historial. El botón Atrás no abre pantallas anteriores.
+function asegurarHistorial() {
+  try {
+    if (!history.state || history.state.juego !== 'activo') history.pushState({ juego: 'activo' }, '');
+  } catch (e) { /* historial no disponible */ }
+}
+
+function ocultarSiEsPrivada() {
+  if (estado.pantalla === 'privada') {
+    estado.pantalla = 'paso';
+    guardarEstado();
+    pintar();
+  }
+}
+
+document.addEventListener('click', evento => {
+  const boton = evento.target.closest('[data-accion]');
+  if (!boton || boton.disabled) return;
+  if (Date.now() < ignorarClicsHasta) return;
+  const accion = ACCIONES[boton.dataset.accion];
+  if (!accion) return;
+  asegurarHistorial();
+  accion(boton);
+});
+
+document.addEventListener('submit', evento => {
+  if (evento.target.id !== 'form-nombre') return;
+  evento.preventDefault();
+  agregarNombre();
+});
+
+document.addEventListener('change', evento => {
+  if (evento.target.id !== 'prueba') return;
+  estado.prueba = evento.target.checked;
+  guardarEstado();
+});
+
+document.addEventListener('input', evento => {
+  if (evento.target.id !== 'pista') return;
+  estado.pistaBorrador = evento.target.value.slice(0, MAX_PISTA);
+  guardarEstado();
+});
+
+window.addEventListener('popstate', () => {
+  try { history.pushState({ juego: 'activo' }, ''); } catch (e) { /* historial no disponible */ }
+  pintar({ mantenerScroll: true });
+});
+
+// Si el celular cambia de aplicación o sale de la página, la pantalla privada se oculta.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') ocultarSiEsPrivada();
+});
+window.addEventListener('pagehide', ocultarSiEsPrivada);
+window.addEventListener('pageshow', evento => {
+  if (evento.persisted) pintar();
+});
+window.addEventListener('online', enviarPendientes);
+
+try {
+  history.replaceState({ juego: 'base' }, '');
+  history.pushState({ juego: 'activo' }, '');
+} catch (e) { /* historial no disponible */ }
+
+pintar();
+enviarPendientes();
+setInterval(enviarPendientes, ESPERA_REINTENTO);
+</script>
+</body>
+</html>
